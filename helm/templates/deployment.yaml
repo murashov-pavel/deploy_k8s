@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.app_name }}-deployment
+  namespace: {{ .Values.namespace }}
+  labels:
+    name: {{ .Values.app_name }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      name: {{ .Values.app_name }}
+  template:
+    metadata:
+      labels:
+        name: {{ .Values.app_name }}
+    spec:
+      imagePullSecrets:
+      - name: {{ .Values.deployment.image_pull_secret_name }}
+      containers:
+      - name: {{ .Values.app_name }}
+        image: "{{ .Values.base_image }}:{{ .Values.tag }}"
+        imagePullPolicy: Always
+        ports:
+        - containerPort: {{ .Values.deployment.container_port }}
+        env:
+        - name: SECURE_VAR
+          valueFrom: 
+            secretKeyRef:
+              name: {{ .Values.app_name }}-secret
+              key: secure-var
+        volumeMounts:
+        - name: config-volume
+          mountPath: /app/config.yaml
+          subPath: config.yaml
+      volumes:
+      - name: config-volume
+        configMap:
+          name: {{ .Values.app_name }}-config
